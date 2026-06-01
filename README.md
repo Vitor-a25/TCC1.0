@@ -11,6 +11,7 @@ opus/
 ├── usuario.php
 ├── empresa.php
 ├── admin.php
+├── backup.php
 ├── banco.sql
 ├── auth.css
 ├── styles.css
@@ -18,6 +19,8 @@ opus/
 ├── assets/
 │   └── css/
 │       └── dashboard.css
+├── backups/
+│   └── (backups automáticos diários)
 └── includes/
     ├── db.php
     └── auth.php
@@ -147,6 +150,7 @@ http://localhost/opus/
 
 - O XAMPP precisa estar aberto e com **Apache + MySQL rodando** sempre que for usar o sistema
 - Os dados ficam salvos no banco mesmo fechando o navegador
+- O sistema realiza **backup automático diário** do banco de dados na pasta `backups/`, mantendo os últimos 7 dias
 - Para usar em outro computador, repita todos os passos acima
 
 ---
