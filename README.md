@@ -127,7 +127,7 @@ http://localhost/opus/
 > selecione o banco `plataforma_servicos`, clique na aba **SQL** e execute:
 > ```sql
 > UPDATE usuario SET senha = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
-> WHERE email IN ('joao@demo.com','eletroluz@demo.com','fretes@demo.com','techhelp@demo.com');
+> WHERE email IN ('joao@demo.com','eletroluz@demo.com','fretes@demo.com','techhelp@demo.com','admin@opus.com');
 > ```
 
 ---

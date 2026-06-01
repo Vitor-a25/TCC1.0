@@ -1,7 +1,5 @@
 <?php
-// ============================================================
-// OPUS - Funções de sessão e autenticação
-// ============================================================
+
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -24,6 +22,8 @@ function requireLogin(string $tipo = ''): void {
         header('Location: login.php?erro=acesso_negado');
         exit;
     }
+
+    fazerBackupAutomatico();
 }
 
 function redirect(string $url): void {

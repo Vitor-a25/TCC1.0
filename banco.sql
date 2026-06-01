@@ -100,12 +100,12 @@ INSERT INTO usuario (nome, email, senha, tipo) VALUES
   ('Administrador', 'admin@opus.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
 
 INSERT INTO usuario (nome, email, senha, telefone, cidade, estado, tipo) VALUES
-  ('João Silva', 'joao@demo.com', '$2y$10$TKh8H1.PkwiDfDpwkixdQ.3vcSdnCWuuKJnk2GClWYN.xUHVWXefi', '(44) 99999-1111', 'Cianorte', 'PR', 'cliente');
+  ('João Silva', 'joao@demo.com', '$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(44) 99999-1111', 'Cianorte', 'PR', 'cliente');
 
 INSERT INTO usuario (nome, email, senha, telefone, cidade, estado, tipo) VALUES
-  ('EletroLuz Admin', 'eletroluz@demo.com', '$2y$10$TKh8H1.PkwiDfDpwkixdQ.3vcSdnCWuuKJnk2GClWYN.xUHVWXefi', '(44) 99999-2222', 'Cianorte', 'PR', 'empresa'),
-  ('Fretes Paraná Admin', 'fretes@demo.com', '$2y$10$TKh8H1.PkwiDfDpwkixdQ.3vcSdnCWuuKJnk2GClWYN.xUHVWXefi', '(44) 99999-3333', 'Cianorte', 'PR', 'empresa'),
-  ('TechHelp Admin', 'techhelp@demo.com', '$2y$10$TKh8H1.PkwiDfDpwkixdQ.3vcSdnCWuuKJnk2GClWYN.xUHVWXefi', '(44) 99999-4444', 'Cianorte', 'PR', 'empresa');
+  ('EletroLuz Admin', 'eletroluz@demo.com', '$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(44) 99999-2222', 'Cianorte', 'PR', 'empresa'),
+  ('Fretes Paraná Admin', 'fretes@demo.com', '$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(44) 99999-3333', 'Cianorte', 'PR', 'empresa'),
+  ('TechHelp Admin', 'techhelp@demo.com', '$$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(44) 99999-4444', 'Cianorte', 'PR', 'empresa');
 
 INSERT INTO empresa (usuario_id, nome, cnpj, email, telefone, cidade, estado, descricao) VALUES
   (3, 'EletroLuz Cianorte', '12.345.678/0001-90', 'contato@eletroluz.com', '(44) 3372-1111', 'Cianorte', 'PR', 'Atendimento residencial e comercial, manutenção preventiva, troca de disjuntores e instalação de tomadas. Mais de 10 anos de experiência no mercado elétrico.'),
