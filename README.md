@@ -38,12 +38,6 @@ opus/
 4. Clique em **Start** no **Apache** e no **MySQL**
    - Ambos devem ficar com fundo **verde**
 
-> ⚠️ **Se o MySQL não iniciar** (porta 3306 ocupada):
-> 1. Clique em **Config** na linha do MySQL → abra **my.ini**
-> 2. Troque as duas ocorrências de `port=3306` para `port=3307`
-> 3. Salve e clique Start novamente
-> 4. Se usar porta 3307, siga os passos 3b e 4 abaixo
-
 ---
 
 ### 2. Colocar o projeto na pasta correta
@@ -55,7 +49,7 @@ C:\xampp\htdocs\opus\
 
 ---
 
-### 3a. Configurar a conexão (porta padrão 3306)
+### 3. Configurar a conexão
 
 Abra `includes/db.php` e deixe assim:
 ```php
@@ -65,49 +59,18 @@ define('DB_PASS', '');
 define('DB_NAME', 'plataforma_servicos');
 ```
 
-### 3b. Configurar a conexão (se usar porta 3307)
-
-Abra `includes/db.php` e deixe assim:
-```php
-define('DB_HOST', '127.0.0.1:3307');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'plataforma_servicos');
-```
-
 ---
 
-### 4. Configurar o phpMyAdmin (somente se usar porta 3307)
-
-Abra o arquivo:
-```
-C:\xampp\phpMyAdmin\config.inc.php
-```
-
-Encontre a linha:
-```php
-$cfg['Servers'][$i]['host'] = 'localhost';
-```
-
-Troque por:
-```php
-$cfg['Servers'][$i]['host'] = '127.0.0.1:3307';
-```
-
----
-
-### 5. Importar o banco de dados
+### 4. Importar o banco de dados
 
 1. Acesse: **http://localhost/phpmyadmin**
-2. Clique em **Novo** no painel esquerdo
-3. Digite o nome: `plataforma_servicos` → clique **Criar**
-4. Com o banco selecionado, clique na aba **Importar**
-5. Clique em **Escolher arquivo** → selecione `banco.sql` da pasta opus
-6. Clique em **Executar**
+2. Clique na aba **Importar** na tela inicial
+3. Clique em **Escolher arquivo** → selecione `banco.sql` da pasta opus
+4. Clique em **Executar**
 
 ---
 
-### 6. Acessar o sistema
+### 5. Acessar o sistema
 
 Abra o navegador e acesse:
 ```
@@ -125,13 +88,6 @@ http://localhost/opus/
 | Empresa (EletroLuz) | eletroluz@demo.com | password |
 | Empresa (Fretes) | fretes@demo.com | password |
 | Empresa (TechHelp) | techhelp@demo.com | password |
-
-> ⚠️ Se as contas demo não logarem, acesse o [phpMyAdmin](http://localhost/phpmyadmin/index.php),
-> selecione o banco `plataforma_servicos`, clique na aba **SQL** e execute:
-> ```sql
-> UPDATE usuario SET senha = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
-> WHERE email IN ('joao@demo.com','eletroluz@demo.com','fretes@demo.com','techhelp@demo.com','admin@opus.com');
-> ```
 
 ---
 
@@ -165,28 +121,44 @@ http://localhost/opus/
 
 ---
 
-<!-- ============================================================ -->
-<!-- ⚠️ REMOVER ESTA SEÇÃO INTEIRA ANTES DE UPAR NO GITHUB ⚠️   -->
-<!-- ============================================================ -->
+## Solução de Problemas
 
-## Como Ligar o Servidor (uso local/apresentação)
+### MySQL não inicia no XAMPP
+O MySQL pode não iniciar se outro processo estiver usando a porta 3306 (como o MySQL nativo do Windows).
 
-### Ligar
-1. Abra o **XAMPP Control Panel**
-2. Clique **Start** no **Apache** e no **MySQL**
-3. Abra o navegador e acesse: `http://localhost/opus/`
-
-### Compartilhar externamente (ngrok)
 1. Abra o **Prompt de Comando como Administrador**
-2. Execute: `ngrok http 80`
-3. Copie o link gerado (ex: `https://xxx.ngrok-free.dev`)
-4. Adicione `/opus` no final e compartilhe
+2. Execute:
+   ```
+   netstat -ano | findstr :3306
+   ```
+3. Anote o PID que aparecer e execute:
+   ```
+   taskkill /PID xxxx /F
+   ```
+4. Volte ao XAMPP e clique **Start** no MySQL
 
-### Desligar
-1. Feche o ngrok com **Ctrl+C** no Prompt de Comando
-2. No XAMPP clique **Stop** no Apache e no MySQL
-3. Clique em **Quit** para fechar o XAMPP
+---
 
-<!-- ============================================================ -->
-<!-- ⚠️ FIM DA SEÇÃO — REMOVER ANTES DE UPAR NO GITHUB ⚠️       -->
-<!-- ============================================================ -->
+### Página não abre no navegador
+- Verifique se o **Apache** está rodando (fundo verde no XAMPP)
+- Confirme que a pasta do projeto está em `C:\xampp\htdocs\opus\`
+- Tente acessar: `http://127.0.0.1/opus/`
+
+---
+
+### Erro de conexão com o banco
+- Verifique se o **MySQL** está rodando (fundo verde no XAMPP)
+- Confirme as configurações em `includes/db.php`
+- Verifique se o banco `plataforma_servicos` foi criado no phpMyAdmin
+
+---
+
+### Contas demo não conseguem logar
+Acesse o [phpMyAdmin](http://localhost/phpmyadmin/index.php), selecione o banco `plataforma_servicos`, clique na aba **SQL** e execute:
+
+```sql
+UPDATE usuario SET senha = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+WHERE email IN ('joao@demo.com','eletroluz@demo.com','fretes@demo.com','techhelp@demo.com','admin@opus.com');
+```
+
+Isso redefine todas as senhas para **password**.
