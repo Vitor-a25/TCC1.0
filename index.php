@@ -1,4 +1,20 @@
-<?php require_once 'includes/auth.php'; ?>
+<?php
+require_once 'includes/auth.php';
+require_once 'includes/db.php';
+
+$db = getDB();
+$cats = $db->query('SELECT * FROM categoria ORDER BY nome')->fetchAll();
+
+// Buscar serviços do banco para os cards da tela inicial
+$servicos_home = $db->query('
+    SELECT s.nome, s.descricao, s.preco_medio, c.icone, c.nome as cat_nome
+    FROM servico s
+    JOIN categoria c ON c.id = s.categoria_id
+    WHERE s.ativo = 1
+    ORDER BY RAND()
+    LIMIT 6
+')->fetchAll();
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -62,15 +78,21 @@
         <input type="text" id="searchInput" placeholder="Ex: eletricista, pintura, frete..." />
         <select id="categoryFilter">
           <option value="todos">Todas as categorias</option>
-          <option value="manutencao">Manutenção</option>
-          <option value="reforma">Reforma</option>
-          <option value="transporte">Transporte</option>
-          <option value="tecnologia">Tecnologia</option>
-          <option value="limpeza">Limpeza</option>
+          <?php foreach ($cats as $c): ?>
+            <option value="<?= $c['id'] ?>"><?= $c['icone'] ?> <?= htmlspecialchars($c['nome']) ?></option>
+          <?php endforeach; ?>
         </select>
         <button id="searchBtn">Buscar</button>
       </div>
-      <div class="services-grid" id="servicesGrid"></div>
+      <div class="services-grid" id="servicesGrid">
+        <?php foreach ($servicos_home as $sv): ?>
+          <article class="service-card" onclick="window.location='<?= isLoggedIn() ? 'usuario.php?aba=buscar' : 'login.php' ?>'" style="cursor:pointer">
+            <div class="service-icon"><?= $sv['icone'] ?></div>
+            <h3><?= htmlspecialchars($sv['nome']) ?></h3>
+            <p><?= htmlspecialchars(mb_strimwidth($sv['descricao'], 0, 80, '...')) ?></p>
+          </article>
+        <?php endforeach; ?>
+      </div>
     </section>
 
     <section class="companies" id="empresas">
@@ -85,9 +107,9 @@
           <p>Atendimento residencial e comercial, manutenção preventiva, troca de disjuntores e instalação de tomadas.</p>
           <div class="rating">★★★★★ <span>4.9 • 128 avaliações</span></div>
           <?php if (isLoggedIn()): ?>
-            <a href="usuario.php?aba=buscar&empresa=1" class="open-modal" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
+            <a href="usuario.php?aba=buscar&empresa=1" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php else: ?>
-            <a href="login.php" class="open-modal" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
+            <a href="login.php" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php endif; ?>
         </article>
         <article class="company-card">
@@ -95,9 +117,9 @@
           <p>Equipe especializada em fretes urbanos, montagem simples e transporte seguro.</p>
           <div class="rating">★★★★☆ <span>4.7 • 82 avaliações</span></div>
           <?php if (isLoggedIn()): ?>
-            <a href="usuario.php?aba=buscar&empresa=2" class="open-modal" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
+            <a href="usuario.php?aba=buscar&empresa=2" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php else: ?>
-            <a href="login.php" class="open-modal" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
+            <a href="login.php" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php endif; ?>
         </article>
         <article class="company-card">
@@ -105,9 +127,9 @@
           <p>Formatação, manutenção, instalação de sistemas e suporte técnico para empresas.</p>
           <div class="rating">★★★★★ <span>4.8 • 94 avaliações</span></div>
           <?php if (isLoggedIn()): ?>
-            <a href="usuario.php?aba=buscar&empresa=3" class="open-modal" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
+            <a href="usuario.php?aba=buscar&empresa=3" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php else: ?>
-            <a href="login.php" class="open-modal" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
+            <a href="login.php" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php endif; ?>
         </article>
       </div>
@@ -118,24 +140,24 @@
         <span>Como funciona</span>
         <h2>Simples, rápido e seguro</h2>
         <p>Em poucos passos você encontra o profissional ideal e acompanha tudo pela plataforma.</p>
-      </div>
-      <div class="steps">
-        <div class="step"><strong>01</strong><h3>Criar conta</h3><p>Cadastre-se gratuitamente como cliente ou empresa prestadora de serviços.</p></div>
-        <div class="step"><strong>02</strong><h3>Buscar serviço</h3><p>Pesquise por categoria, palavra-chave ou nome da empresa.</p></div>
-        <div class="step"><strong>03</strong><h3>Solicitar atendimento</h3><p>Descreva o que você precisa e envie direto para a empresa escolhida.</p></div>
-        <div class="step"><strong>04</strong><h3>Avaliar</h3><p>Após a conclusão, avalie o atendimento e ajude outros usuários.</p></div>
-      </div>
+      <div class="steps" style="margin-top:40px">
+  <div class="step"><h3>Criar conta</h3><p>Cadastre-se gratuitamente como cliente ou empresa prestadora de serviços.</p></div>
+  <div class="step"><h3>Buscar serviço</h3><p>Pesquise por categoria, palavra-chave ou nome da empresa.</p></div>
+  <div class="step"><h3>Solicitar atendimento</h3><p>Descreva o que você precisa e envie direto para a empresa escolhida.</p></div>
+</div>
+<div style="display:flex;justify-content:center;margin-top:24px">
+  <div class="step" style="max-width:600px;text-align:center"><h3>Avaliar</h3><p>Após a conclusão, avalie o atendimento e ajude outros usuários.</p></div>
+</div>
     </section>
 
     <section class="dashboards">
       <div class="section-title">
         <span>Para todos os perfis</span>
-        <h2>Uma plataforma, três experiências</h2>
+        <h2>Uma plataforma, duas experiências</h2>
       </div>
-      <div class="dashboard-grid">
+      <div class="dashboard-grid" style="display:grid;grid-template-columns:1fr 1fr;max-width:700px;margin:0 auto;gap:44px">
         <div class="panel"><h3>🙋 Cliente</h3><ul><li>Buscar serviços</li><li>Visualizar empresas</li><li>Solicitar atendimento</li><li>Avaliar prestadores</li></ul></div>
         <div class="panel"><h3>🏢 Empresa</h3><ul><li>Cadastrar perfil</li><li>Gerenciar serviços</li><li>Responder solicitações</li><li>Acompanhar avaliações</li></ul></div>
-        <div class="panel"><h3>🔑 Administrador</h3><ul><li>Gerenciar usuários</li><li>Gerenciar empresas</li><li>Organizar categorias</li><li>Moderar avaliações</li></ul></div>
       </div>
     </section>
 
@@ -171,4 +193,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+</html> 

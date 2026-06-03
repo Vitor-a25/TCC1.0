@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar_
         $pm = str_replace(',', '.', str_replace('.', '', $_POST['preco'] ?? ''));
         $sid = (int)($_POST['servico_id']  ?? 0);
         if (!$sn) { $msg = 'error:Informe o nome do serviço.'; }
+        elseif (!$cat) { $msg = 'error:Selecione uma categoria para o serviço.'; }
         elseif ($sid) {
             $db->prepare('UPDATE servico SET nome=?,descricao=?,categoria_id=?,preco_medio=? WHERE id=? AND empresa_id=?')
                ->execute([$sn,$sd,$cat ?: null,$pm ?: null,$sid,$emp_id]);
@@ -66,13 +67,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'respond
     $resp      = trim($_POST['resposta'] ?? '');
     $status    = $_POST['status'] ?? 'Em andamento';
     $data_conc = ($status === 'Concluído') ? date('Y-m-d') : null;
-    if ($sol_id && $resp) {
-        $db->prepare('UPDATE solicitacao SET resposta=?,status=?,data_conclusao=? WHERE id=? AND empresa_id=?')
-           ->execute([$resp,$status,$data_conc,$sol_id,$emp_id]);
+    $func_id = (int)($_POST['funcionario_id'] ?? 0);
+    if ($sol_id && $resp && $func_id) {
+        $db->prepare('UPDATE solicitacao SET resposta=?,status=?,data_conclusao=?,funcionario_id=? WHERE id=? AND empresa_id=?')
+           ->execute([$resp,$status,$data_conc,$func_id,$sol_id,$emp_id]);
         redirect('empresa.php?aba=solicitacoes&ok=Resposta+enviada+com+sucesso');
     } else {
-        $msg = 'error:Preencha a resposta.';
+        $msg = 'error:Preencha a resposta e selecione um funcionário.';
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar_func') {
+    if ($emp_id) {
+        $fn   = trim($_POST['func_nome']     ?? '');
+        $ft   = trim($_POST['func_tel']      ?? '');
+        $fc   = trim($_POST['func_cargo']    ?? '');
+        $fid  = (int)($_POST['func_id']      ?? 0);
+        if ($fn) {
+            if ($fid) {
+                $db->prepare('UPDATE funcionario SET nome=?,telefone=?,cargo=? WHERE id=? AND empresa_id=?')
+                   ->execute([$fn,$ft,$fc,$fid,$emp_id]);
+                redirect('empresa.php?aba=funcionarios&ok=Funcionario+atualizado');
+            } else {
+                $db->prepare('INSERT INTO funcionario (empresa_id,nome,telefone,cargo) VALUES (?,?,?,?)')
+                   ->execute([$emp_id,$fn,$ft,$fc]);
+                redirect('empresa.php?aba=funcionarios&ok=Funcionario+cadastrado');
+            }
+        }
+    }
+}
+
+if ($_GET['del_func'] ?? null) {
+    $db->prepare('DELETE FROM funcionario WHERE id=? AND empresa_id=?')->execute([(int)$_GET['del_func'],$emp_id]);
+    redirect('empresa.php?aba=funcionarios&ok=Funcionario+removido');
 }
 
 $aba = $_GET['aba'] ?? 'painel';
@@ -120,6 +147,20 @@ if (isset($_GET['edit_srv']) && $emp_id) {
     $editSrv = $es->fetch();
 }
 
+$funcionarios = [];
+if ($emp_id) {
+    $f = $db->prepare('SELECT * FROM funcionario WHERE empresa_id=? AND ativo=1 ORDER BY nome');
+    $f->execute([$emp_id]);
+    $funcionarios = $f->fetchAll();
+}
+
+$editFunc = null;
+if (isset($_GET['edit_func']) && $emp_id) {
+    $ef = $db->prepare('SELECT * FROM funcionario WHERE id=? AND empresa_id=?');
+    $ef->execute([(int)$_GET['edit_func'], $emp_id]);
+    $editFunc = $ef->fetch();
+}
+
 [$msgTipo, $msgText] = $msg ? explode(':', $msg, 2) : ['', ''];
 ?>
 <!DOCTYPE html>
@@ -147,6 +188,8 @@ if (isset($_GET['edit_srv']) && $emp_id) {
     <a href="?aba=painel"       class="<?= $aba==='painel'?'active':'' ?>"><span class="icon">📊</span> Painel</a>
     <a href="?aba=perfil"       class="<?= $aba==='perfil'?'active':'' ?>"><span class="icon">🏢</span> Minha Empresa</a>
     <a href="?aba=servicos"     class="<?= $aba==='servicos'?'active':'' ?>"><span class="icon">🛠️</span> Serviços</a>
+    <a href="usuario.php"><span class="icon">🔍</span> Buscar Serviços</a>
+    <a href="?aba=funcionarios"  class="<?= $aba==='funcionarios'?'active':'' ?>"><span class="icon">👷</span> Funcionários</a>
     <a href="?aba=solicitacoes" class="<?= $aba==='solicitacoes'?'active':'' ?>"><span class="icon">📩</span> Solicitações <?php if($pendentes): ?><span style="background:var(--yellow);color:#000;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:4px"><?= $pendentes ?></span><?php endif; ?></a>
   </nav>
   <div class="sidebar-footer">
@@ -176,7 +219,8 @@ if (isset($_GET['edit_srv']) && $emp_id) {
   <?php $ultsols = array_slice(array_filter($solicitacoes, fn($s)=>$s['status']==='Pendente'), 0, 5); ?>
   <?php if ($ultsols): ?>
   <div class="card">
-    <div class="card-header"><h2>🔔 Solicitações Pendentes</h2><a href="?aba=solicitacoes" class="btn btn-outline btn-sm">Ver todas</a></div>
+    <div class="card-header"><h2>🔔 Solicitações Pendentes</h2>
+    <a href="?aba=solicitacoes" class="btn btn-outline btn-sm">Ver todas</a></div>
     <table>
       <thead><tr><th>Cliente</th><th>Descrição</th><th>Prioridade</th><th>Data</th><th>Ação</th></tr></thead>
       <tbody>
@@ -223,8 +267,8 @@ if (isset($_GET['edit_srv']) && $emp_id) {
       <div class="form-grid two">
         <div class="form-group"><label>Nome do serviço *</label><input type="text" name="nome_srv" value="<?= e($editSrv['nome'] ?? '') ?>" required></div>
         <div class="form-group"><label>Categoria</label>
-          <select name="categoria_id">
-            <option value="">Sem categoria</option>
+          <select name="categoria_id" required>
+            <option value="">Selecione uma categoria *</option>
             <?php foreach ($cats as $c): ?><option value="<?= $c['id'] ?>" <?= (($editSrv['categoria_id']??0)==$c['id'])?'selected':'' ?>><?= e($c['icone'].' '.$c['nome']) ?></option><?php endforeach; ?>
           </select>
         </div>
@@ -264,6 +308,50 @@ if (isset($_GET['edit_srv']) && $emp_id) {
     <?php endif; ?>
   </div>
 
+  <?php elseif ($aba === 'funcionarios'): ?>
+  <div class="topbar"><div><h1>👷 Funcionários</h1><p>Gerencie os funcionários da sua empresa</p></div></div>
+  <div class="card">
+    <div class="card-header"><h2><?= $editFunc ? 'Editar Funcionário' : 'Novo Funcionário' ?></h2></div>
+    <form method="POST">
+      <input type="hidden" name="acao" value="salvar_func">
+      <?php if ($editFunc): ?><input type="hidden" name="func_id" value="<?= $editFunc['id'] ?>"><?php endif; ?>
+      <div class="form-grid two">
+        <div class="form-group"><label>Nome *</label><input type="text" name="func_nome" value="<?= e($editFunc['nome'] ?? '') ?>" required placeholder="Nome completo"></div>
+        <div class="form-group"><label>Telefone</label><input type="tel" name="func_tel" id="func_tel" value="<?= e($editFunc['telefone'] ?? '') ?>" placeholder="(44) 99999-9999"></div>
+        <div class="form-group"><label>Cargo</label><input type="text" name="func_cargo" value="<?= e($editFunc['cargo'] ?? '') ?>" placeholder="Ex: Técnico, Eletricista..."></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary"><?= $editFunc ? 'Salvar edição' : 'Cadastrar funcionário' ?></button>
+        <?php if ($editFunc): ?><a href="?aba=funcionarios" class="btn btn-outline">Cancelar</a><?php endif; ?>
+      </div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2>Funcionários Cadastrados</h2></div>
+    <?php if ($funcionarios): ?>
+    <table>
+      <thead><tr><th>Nome</th><th>Cargo</th><th>Telefone</th><th>Ações</th></tr></thead>
+      <tbody>
+      <?php foreach ($funcionarios as $f): ?>
+        <tr>
+          <td><strong><?= e($f['nome']) ?></strong></td>
+          <td><?= e($f['cargo'] ?? '—') ?></td>
+          <td><?= e($f['telefone'] ?? '—') ?></td>
+          <td>
+            <div class="btn-group">
+              <a href="?aba=funcionarios&edit_func=<?= $f['id'] ?>" class="btn btn-outline btn-sm">✏️ Editar</a>
+              <a href="?del_func=<?= $f['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Remover este funcionário?')">🗑️</a>
+            </div>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    <?php else: ?>
+      <div class="empty-state"><div class="icon">👷</div><p>Nenhum funcionário cadastrado ainda.</p></div>
+    <?php endif; ?>
+  </div>
+
   <?php elseif ($aba === 'solicitacoes'): ?>
   <div class="topbar"><div><h1>📩 Solicitações</h1><p>Responda as solicitações dos seus clientes</p></div></div>
 
@@ -271,7 +359,7 @@ if (isset($_GET['edit_srv']) && $emp_id) {
   $responder_id = (int)($_GET['responder'] ?? 0);
   $solResp = null;
   if ($responder_id && $emp_id) {
-      $sr = $db->prepare('SELECT s.*,u.nome as u_nome,u.telefone as u_tel FROM solicitacao s JOIN usuario u ON u.id=s.usuario_id WHERE s.id=? AND s.empresa_id=?');
+      $sr = $db->prepare('SELECT s.*,u.nome as u_nome,u.telefone as u_tel,u.endereco as u_endereco,u.cidade as u_cidade,u.estado as u_estado FROM solicitacao s JOIN usuario u ON u.id=s.usuario_id WHERE s.id=? AND s.empresa_id=?');
       $sr->execute([$responder_id, $emp_id]);
       $solResp = $sr->fetch();
   }
@@ -307,8 +395,11 @@ if (isset($_GET['edit_srv']) && $emp_id) {
       <h2>Responder Solicitação</h2>
       <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:14px;padding:14px;margin-bottom:20px">
         <strong>Cliente:</strong> <?= e($solResp['u_nome']) ?> — <?= e($solResp['u_tel']) ?><br>
-        <strong>Prioridade:</strong> <?= e($solResp['prioridade']) ?><br>
-        <strong>Descrição:</strong> <?= e($solResp['descricao']) ?>
+<?php if ($solResp['u_endereco']): ?>
+<strong>Endereço:</strong> <?= e($solResp['u_endereco']) ?><?= $solResp['u_cidade'] ? ', ' . e($solResp['u_cidade']) : '' ?><?= $solResp['u_estado'] ? ' - ' . e($solResp['u_estado']) : '' ?><br>
+<?php endif; ?>
+<strong>Prioridade:</strong> <?= e($solResp['prioridade']) ?><br>
+<strong>Descrição:</strong> <?= e($solResp['descricao']) ?>
       </div>
       <?php if ($solResp['resposta']): ?>
         <div class="alert alert-info">Resposta atual: <?= e($solResp['resposta']) ?></div>
@@ -317,7 +408,7 @@ if (isset($_GET['edit_srv']) && $emp_id) {
         <input type="hidden" name="acao" value="responder">
         <input type="hidden" name="solicitacao_id" value="<?= $solResp['id'] ?>">
         <div class="form-grid">
-          <div class="form-group"><label>Resposta / Orçamento *</label><textarea name="resposta" placeholder="Informe orçamento, prazo e condições de atendimento..." required><?= e($solResp['resposta'] ?? '') ?></textarea></div>
+          <div class="form-group"><label>Resposta / Orçamento *</label><textarea name="resposta" required><?= e($solResp['resposta'] ?? 'Olá! Recebemos sua solicitação e já estamos a caminho.') ?></textarea>
           <div class="form-group"><label>Atualizar status</label>
             <select name="status">
               <option value="Pendente"     <?= $solResp['status']==='Pendente'?'selected':'' ?>>Pendente</option>
@@ -326,8 +417,25 @@ if (isset($_GET['edit_srv']) && $emp_id) {
               <option value="Cancelado"    <?= $solResp['status']==='Cancelado'?'selected':'' ?>>Cancelado</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>👷 Funcionário responsável *</label>
+            <?php if ($funcionarios): ?>
+            <select name="funcionario_id" required>
+              <option value="">Selecione o funcionário...</option>
+              <?php foreach ($funcionarios as $f): ?>
+                <option value="<?= $f['id'] ?>" <?= ($solResp['funcionario_id']??0)==$f['id']?'selected':'' ?>>
+                  <?= e($f['nome']) ?><?= $f['cargo'] ? ' — '.$f['cargo'] : '' ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <?php else: ?>
+              <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px;font-size:13px;color:#f87171;">
+                ⚠️ Nenhum funcionário cadastrado. <a href="?aba=funcionarios" style="color:#f87171;text-decoration:underline;">Cadastrar agora</a>
+              </div>
+            <?php endif; ?>
+          </div>
         </div>
-        <div style="margin-top:14px"><button type="submit" class="btn btn-primary">Enviar resposta</button></div>
+        <div style="margin-top:14px"><button type="submit" class="btn btn-primary"<?= !$funcionarios ? ' disabled' : '' ?>>Enviar resposta</button></div>
       </form>
     </div>
   </div>
@@ -350,6 +458,23 @@ if (precoEl) {
         e.target.value = reais + ',' + centavos;
     });
 }
+
+function mascaraTelFunc() {
+    const el = document.getElementById('func_tel');
+    if (!el) return;
+    el.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '').substring(0, 11);
+        if (v.length <= 10) {
+            v = v.replace(/^(\d{2})(\d)/, '($1) $2');
+            v = v.replace(/(\d{4})(\d)/, '$1-$2');
+        } else {
+            v = v.replace(/^(\d{2})(\d)/, '($1) $2');
+            v = v.replace(/(\d{5})(\d)/, '$1-$2');
+        }
+        e.target.value = v;
+    });
+}
+mascaraTelFunc();
 
 const cnpjEmp = document.getElementById('cnpj_emp');
 if (cnpjEmp) {

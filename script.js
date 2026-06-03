@@ -1,9 +1,40 @@
-const services=[{icon:'⚡',name:'Eletricista',category:'manutencao',desc:'Instalações, reparos elétricos e manutenção preventiva.',price:'A partir de R$ 120'},{icon:'🚰',name:'Encanador',category:'manutencao',desc:'Serviços hidráulicos, vazamentos e instalações.',price:'A partir de R$ 100'},{icon:'🎨',name:'Pintura',category:'reforma',desc:'Pintura residencial, comercial e acabamento.',price:'A partir de R$ 250'},{icon:'🚚',name:'Frete',category:'transporte',desc:'Transporte de móveis, entregas e pequenas mudanças.',price:'A partir de R$ 150'},{icon:'💻',name:'Informática',category:'tecnologia',desc:'Suporte técnico, formatação e manutenção de computadores.',price:'A partir de R$ 90'},{icon:'🧹',name:'Diarista',category:'limpeza',desc:'Limpeza residencial, pós-obra e organização de ambientes.',price:'A partir de R$ 130'}];
-const grid=document.getElementById('servicesGrid');
-const input=document.getElementById('searchInput');
-const filter=document.getElementById('categoryFilter');
-function renderServices(list){grid.innerHTML=list.length?list.map(s=>`<article class="service-card" onclick="window.location='login.php'" style="cursor:pointer"><div class="service-icon">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p></article>`).join(''):`<p class="empty">Nenhum prestador localizado para o filtro aplicado.</p>`}
-function search(){const term=input.value.toLowerCase();const cat=filter.value;const filtered=services.filter(s=>(cat==='todos'||s.category===cat)&&(s.name.toLowerCase().includes(term)||s.desc.toLowerCase().includes(term)));renderServices(filtered)}
-document.getElementById('searchBtn').addEventListener('click',search);input.addEventListener('input',search);filter.addEventListener('change',search);renderServices(services);
-document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('navMenu').classList.toggle('active'));
-const modal=document.getElementById('requestModal');const selected=document.getElementById('selectedCompany');document.querySelectorAll('.open-modal').forEach(btn=>btn.addEventListener('click',()=>{selected.textContent='Empresa selecionada: '+btn.dataset.company;modal.classList.add('active')}));document.getElementById('closeModal').addEventListener('click',()=>modal.classList.remove('active'));modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('active')});document.getElementById('requestForm').addEventListener('submit',e=>{e.preventDefault();alert('Solicitação enviada com status: Pendente.');modal.classList.remove('active');e.target.reset()});
+// Busca na tela inicial — filtra os cards pelo select de categoria
+const input  = document.getElementById('searchInput');
+const filter = document.getElementById('categoryFilter');
+const grid   = document.getElementById('servicesGrid');
+
+function filterCards() {
+    const term = input ? input.value.toLowerCase() : '';
+    const cat  = filter ? filter.value : 'todos';
+    const cards = grid ? grid.querySelectorAll('.service-card') : [];
+    let visible = 0;
+    cards.forEach(card => {
+        const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+        const desc = card.querySelector('p')?.textContent.toLowerCase()  || '';
+        const cardCat = card.dataset.cat || '';
+        const matchTerm = !term || name.includes(term) || desc.includes(term);
+        const matchCat  = cat === 'todos' || cardCat === cat;
+        card.style.display = (matchTerm && matchCat) ? '' : 'none';
+        if (matchTerm && matchCat) visible++;
+    });
+    // Mostrar mensagem se nenhum resultado
+    let empty = grid ? grid.querySelector('.empty-msg') : null;
+    if (!empty && grid) {
+        empty = document.createElement('p');
+        empty.className = 'empty-msg empty';
+        grid.appendChild(empty);
+    }
+    if (empty) empty.style.display = visible === 0 ? '' : 'none';
+}
+
+if (document.getElementById('searchBtn')) {
+    document.getElementById('searchBtn').addEventListener('click', filterCards);
+}
+if (input)  input.addEventListener('input', filterCards);
+if (filter) filter.addEventListener('change', filterCards);
+
+// Menu mobile
+const menuBtn = document.getElementById('menuBtn');
+if (menuBtn) {
+    menuBtn.addEventListener('click', () => document.getElementById('navMenu').classList.toggle('active'));
+}

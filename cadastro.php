@@ -41,19 +41,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $hash   = password_hash($senha, PASSWORD_DEFAULT);
             $tipoDB = ($tipo === 'empresa') ? 'empresa' : 'cliente';
-            $ins    = $db->prepare('INSERT INTO usuario (nome, email, senha, telefone, tipo) VALUES (?,?,?,?,?)');
-            $ins->execute([$nome, $email, $hash, $tel, $tipoDB]);
+
+            // Endereço do cliente
+            $end = trim($_POST['endereco'] ?? '');
+            $cid = trim($_POST['cidade']   ?? '');
+            $est = trim($_POST['estado']   ?? '');
+
+            $ins = $db->prepare('INSERT INTO usuario (nome, email, senha, telefone, endereco, cidade, estado, tipo) VALUES (?,?,?,?,?,?,?,?)');
+            $ins->execute([$nome, $email, $hash, $tel, $end, $cid, $est, $tipoDB]);
             $uid = $db->lastInsertId();
 
             if ($tipoDB === 'empresa') {
                 $nome_emp = trim($_POST['nome_emp'] ?? '');
                 $cnpj     = trim($_POST['cnpj']     ?? '');
-                $end      = trim($_POST['endereco'] ?? '');
-                $cid      = trim($_POST['cidade']   ?? '');
-                $est      = trim($_POST['estado']   ?? '');
-                $desc     = trim($_POST['descricao']?? '');
+                $end_emp  = trim($_POST['endereco_emp'] ?? '');
+                $cid_emp  = trim($_POST['cidade_emp']   ?? '');
+                $est_emp  = trim($_POST['estado_emp']   ?? '');
+                $desc     = trim($_POST['descricao'] ?? '');
                 $db->prepare('INSERT INTO empresa (usuario_id, nome, cnpj, email, telefone, endereco, cidade, estado, descricao) VALUES (?,?,?,?,?,?,?,?,?)')
-                   ->execute([$uid, $nome_emp, $cnpj, $email, $tel, $end, $cid, $est, $desc]);
+                   ->execute([$uid, $nome_emp, $cnpj, $email, $tel, $end_emp, $cid_emp, $est_emp, $desc]);
             }
 
             $sucesso = true;
@@ -166,6 +172,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <button type="button" class="senha-toggle" onclick="toggleSenha('confirm_cliente', this)">👁️</button>
         </div>
       </label>
+
+      <p style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">Endereço</p>
+      <div class="two" style="align-items:start">
+        <label>CEP
+          <input type="text" name="cep_cliente" id="cep_cliente" placeholder="00000-000" maxlength="9" value="<?= e($_POST['cep_cliente'] ?? '') ?>">
+          <div class="cep-loading" id="cep_status_cliente"></div>
+        </label>
+        <label style="margin-top:0">Número
+          <input type="text" name="numero_cliente" id="numero_cliente" placeholder="Ex: 123" value="<?= e($_POST['numero_cliente'] ?? '') ?>">
+        </label>
+      </div>
+      <label>Endereço
+        <input type="text" name="endereco" id="endereco_cliente" placeholder="Preenchido automaticamente pelo CEP" value="<?= e($_POST['endereco'] ?? '') ?>">
+      </label>
+      <div class="two">
+        <label>Cidade
+          <input type="text" name="cidade" id="cidade_cliente" placeholder="Preenchida pelo CEP" value="<?= e($_POST['cidade'] ?? '') ?>">
+        </label>
+        <label>Estado
+          <input type="text" name="estado" id="estado_cliente" placeholder="PR" maxlength="2" value="<?= e($_POST['estado'] ?? '') ?>">
+        </label>
+      </div>
+
       <button type="submit">Criar conta</button>
     </form>
     <span>Já possui conta? <a href="login.php">Entrar</a></span>
@@ -230,24 +259,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </label>
 
       <p style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">Endereço</p>
-     <div class="two" style="align-items:start">
-  <label>CEP
-    <input type="text" name="cep" id="cep" placeholder="00000-000" maxlength="9" value="<?= e($_POST['cep'] ?? '') ?>">
-    <div class="cep-loading" id="cep_status"></div>
-  </label>
-  <label style="margin-top:0">Número
-    <input type="text" name="numero" id="numero" placeholder="Ex: 123" value="<?= e($_POST['numero'] ?? '') ?>">
-  </label>
-</div>
+      <div class="two" style="align-items:start">
+        <label>CEP
+          <input type="text" name="cep" id="cep" placeholder="00000-000" maxlength="9" value="<?= e($_POST['cep'] ?? '') ?>">
+          <div class="cep-loading" id="cep_status"></div>
+        </label>
+        <label style="margin-top:0">Número
+          <input type="text" name="numero" id="numero" placeholder="Ex: 123" value="<?= e($_POST['numero'] ?? '') ?>">
+        </label>
+      </div>
       <label>Endereço
-        <input type="text" name="endereco" id="endereco" placeholder="Preenchido automaticamente pelo CEP" value="<?= e($_POST['endereco'] ?? '') ?>">
+        <input type="text" name="endereco_emp" id="endereco" placeholder="Preenchido automaticamente pelo CEP" value="<?= e($_POST['endereco_emp'] ?? '') ?>">
       </label>
       <div class="two">
         <label>Cidade
-          <input type="text" name="cidade" id="cidade" placeholder="Preenchida pelo CEP" value="<?= e($_POST['cidade'] ?? '') ?>">
+          <input type="text" name="cidade_emp" id="cidade" placeholder="Preenchida pelo CEP" value="<?= e($_POST['cidade_emp'] ?? '') ?>">
         </label>
         <label>Estado
-          <input type="text" name="estado" id="estado" placeholder="PR" maxlength="2" value="<?= e($_POST['estado'] ?? '') ?>">
+          <input type="text" name="estado_emp" id="estado" placeholder="PR" maxlength="2" value="<?= e($_POST['estado_emp'] ?? '') ?>">
         </label>
       </div>
 
@@ -324,27 +353,27 @@ function validarSenha(inputId, prefixo) {
 validarSenha('senha_cliente', 'rc');
 validarSenha('senha_empresa', 're');
 
-const cepEl = document.getElementById('cep');
-if (cepEl) {
+function setupCEP(cepId, numId, endId, cidId, estId, statusId) {
+    const cepEl = document.getElementById(cepId);
+    if (!cepEl) return;
     cepEl.addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, '').substring(0, 8);
         v = v.replace(/^(\d{5})(\d)/, '$1-$2');
         e.target.value = v;
-
-        const status = document.getElementById('cep_status');
+        const status = document.getElementById(statusId);
         if (v.replace(/\D/g, '').length === 8) {
             status.textContent = '🔍 Buscando endereço...';
             fetch('https://viacep.com.br/ws/' + v.replace(/\D/g, '') + '/json/')
                 .then(r => r.json())
                 .then(d => {
                     if (!d.erro) {
-                        const num = document.getElementById('numero').value;
-                        document.getElementById('endereco').value = d.logradouro + (d.bairro ? ', ' + d.bairro : '') + (num ? ', ' + num : '');
-                        document.getElementById('cidade').value   = d.localidade;
-                        document.getElementById('estado').value   = d.uf;
+                        const num = document.getElementById(numId).value;
+                        document.getElementById(endId).value = d.logradouro + (d.bairro ? ', ' + d.bairro : '') + (num ? ', ' + num : '');
+                        document.getElementById(cidId).value = d.localidade;
+                        document.getElementById(estId).value = d.uf;
                         status.textContent = '✅ Endereço encontrado!';
                         status.style.color = '#22c55e';
-                        document.getElementById('numero').focus();
+                        document.getElementById(numId).focus();
                     } else {
                         status.textContent = '❌ CEP não encontrado.';
                         status.style.color = '#ef4444';
@@ -359,15 +388,18 @@ if (cepEl) {
         }
     });
 
-    document.getElementById('numero').addEventListener('input', function() {
-        const end = document.getElementById('endereco').value;
+    document.getElementById(numId)?.addEventListener('input', function() {
+        const end = document.getElementById(endId).value;
         if (end) {
             const partes = end.split(', ');
             const semNum = partes.filter(p => isNaN(p.trim())).join(', ');
-            document.getElementById('endereco').value = semNum + (this.value ? ', ' + this.value : '');
+            document.getElementById(endId).value = semNum + (this.value ? ', ' + this.value : '');
         }
     });
 }
+
+setupCEP('cep_cliente', 'numero_cliente', 'endereco_cliente', 'cidade_cliente', 'estado_cliente', 'cep_status_cliente');
+setupCEP('cep', 'numero', 'endereco', 'cidade', 'estado', 'cep_status');
 </script>
 </body>
 </html>

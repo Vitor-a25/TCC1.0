@@ -1,7 +1,7 @@
 <?php
 require_once 'includes/auth.php';
 require_once 'includes/db.php';
-requireLogin('cliente');
+requireLogin();
 
 $db   = getDB();
 $uid  = $_SESSION['usuario_id'];
@@ -90,7 +90,7 @@ if (isset($_GET['empresa'])) {
     }
 }
 
-$sols = $db->prepare('SELECT s.*, e.nome as emp_nome FROM solicitacao s JOIN empresa e ON e.id = s.empresa_id WHERE s.usuario_id = ? ORDER BY s.data_solicitacao DESC');
+$sols = $db->prepare('SELECT s.*, e.nome as emp_nome, e.telefone as emp_tel, f.nome as func_nome, f.telefone as func_tel, f.cargo as func_cargo FROM solicitacao s JOIN empresa e ON e.id = s.empresa_id LEFT JOIN funcionario f ON f.id = s.funcionario_id WHERE s.usuario_id = ? ORDER BY s.data_solicitacao DESC');
 $sols->execute([$uid]);
 $minhasSols = $sols->fetchAll();
 
@@ -129,12 +129,17 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
   <div class="sidebar-user">
     <strong><?= e($nome) ?></strong>
     <span>Bem-vindo!</span>
-    <div class="sidebar-badge">Cliente</div>
+    <div class="sidebar-badge <?= getTipo()==='empresa'?'empresa':'' ?>"><?= ucfirst(getTipo()) ?></div>
   </div>
   <nav class="sidebar-nav">
     <a href="?aba=buscar"       class="<?= $aba==='buscar'?'active':'' ?>"><span class="icon">🔍</span> Buscar Serviços</a>
     <a href="?aba=solicitacoes" class="<?= $aba==='solicitacoes'?'active':'' ?>"><span class="icon">📋</span> Minhas Solicitações</a>
+    <?php if (getTipo() === 'cliente'): ?>
     <a href="?aba=avaliacoes"   class="<?= $aba==='avaliacoes'?'active':'' ?>"><span class="icon">⭐</span> Avaliar Empresas</a>
+    <?php endif; ?>
+    <?php if (getTipo() === 'empresa'): ?>
+    <a href="empresa.php"><span class="icon">🏢</span> Voltar ao Painel</a>
+    <?php endif; ?>
   </nav>
   <div class="sidebar-footer">
     <a href="logout.php">🚪 Sair</a>
@@ -161,20 +166,20 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
 
   <form method="GET" class="search-bar" style="flex-wrap:wrap;gap:10px">
     <input type="hidden" name="aba" value="buscar">
-    <input type="text" name="q" placeholder="Ex: eletricista, frete, informática..." value="<?= e($termo) ?>" style="flex:1;min-width:200px">
-    <select name="cidade" style="flex:0 0 180px">
-      <option value="">Todas as cidades</option>
-      <?php foreach ($cidades as $c): ?>
-        <option value="<?= e($c) ?>" <?= ($_GET['cidade']??'')===$c?'selected':'' ?>><?= e($c) ?></option>
-      <?php endforeach; ?>
-    </select>
+    <button type="submit" class="btn btn-primary">Buscar</button>
     <select name="cat" style="flex:0 0 180px">
       <option value="">Todas as categorias</option>
       <?php foreach ($cats as $c): ?>
         <option value="<?= $c['id'] ?>" <?= (($_GET['cat']??'')==$c['id'])?'selected':'' ?>><?= e($c['icone'].' '.$c['nome']) ?></option>
       <?php endforeach; ?>
     </select>
-    <button type="submit" class="btn btn-primary">Buscar</button>
+    <select name="cidade" style="flex:0 0 180px">
+      <option value="">Todas as cidades</option>
+      <?php foreach ($cidades as $c): ?>
+        <option value="<?= e($c) ?>" <?= ($_GET['cidade']??'')===$c?'selected':'' ?>><?= e($c) ?></option>
+      <?php endforeach; ?>
+    </select>
+    <input type="text" name="q" placeholder="Ex: eletricista, frete, informática..." value="<?= e($termo) ?>" style="flex:1;min-width:200px">
   </form>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
@@ -211,7 +216,12 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
       <tbody>
       <?php foreach ($minhasSols as $s): ?>
         <tr>
-          <td><?= e($s['emp_nome']) ?></td>
+          <td>
+  <?= e($s['emp_nome']) ?>
+  <?php if ($s['emp_tel']): ?>
+    <br><small style="color:var(--muted)"><?= e($s['emp_tel']) ?></small>
+  <?php endif; ?>
+</td>
           <td style="max-width:200px"><?= e(mb_strimwidth($s['descricao'],0,80,'...')) ?></td>
           <td><?= e($s['prioridade']) ?></td>
           <td>
@@ -220,8 +230,13 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
           </td>
           <td style="white-space:nowrap"><?= date('d/m/Y', strtotime($s['data_solicitacao'])) ?></td>
           <td style="color:var(--muted);font-size:13px;max-width:180px">
-            <?= $s['resposta'] ? e(mb_strimwidth($s['resposta'],0,80,'...')) : '<em>Aguardando…</em>' ?>
-          </td>
+    <?= $s['resposta'] ? e(mb_strimwidth($s['resposta'],0,80,'...')) : '<em>Aguardando…</em>' ?>
+    <?php if ($s['func_nome']): ?>
+      <br><br>
+      <small style="color:var(--muted);font-size:11px">Funcionário destinado para o serviço:<br>
+      <?= e($s['func_nome']) ?><?= $s['func_tel'] ? ' — ' . e($s['func_tel']) : '' ?></small>
+    <?php endif; ?>
+</td>
         </tr>
       <?php endforeach; ?>
       </tbody>
@@ -289,24 +304,32 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
     <p style="color:var(--muted);font-size:14px;margin-bottom:20px"><?= e($empSel['descricao']) ?></p>
     <?php if ($empSel['servicos']): ?>
     <h3 style="margin-bottom:12px;font-size:15px">Serviços oferecidos</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+    <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Selecione um ou mais serviços para incluir na solicitação.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px" id="servicosGrid">
       <?php foreach ($empSel['servicos'] as $sv): ?>
-      <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:14px;padding:14px">
-        <strong style="font-size:14px"><?= e($sv['nome']) ?></strong>
-        <p style="color:var(--muted);font-size:12px;margin:4px 0"><?= e($sv['descricao']) ?></p>
-        <?php if($sv['preco_medio']): ?><span style="color:#d8b4fe;font-weight:700;font-size:13px">R$ <?= number_format($sv['preco_medio'],2,',','.') ?></span><?php endif; ?>
-      </div>
+      <label style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:14px;padding:14px;cursor:pointer;display:block;transition:.2s" class="srv-card" data-preco="<?= $sv['preco_medio'] ?? 0 ?>" data-nome="<?= e($sv['nome']) ?>">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <input type="checkbox" name="servicos_sel[]" value="<?= e($sv['nome']) ?>" data-preco="<?= $sv['preco_medio'] ?? 0 ?>" style="width:16px;height:16px;accent-color:#a855f7;cursor:pointer" onchange="atualizarTotal()">
+          <strong style="font-size:14px"><?= e($sv['nome']) ?></strong>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin:4px 0 6px 26px"><?= e($sv['descricao']) ?></p>
+        <?php if($sv['preco_medio']): ?><span style="color:#d8b4fe;font-weight:700;font-size:13px;margin-left:26px">R$ <?= number_format($sv['preco_medio'],2,',','.') ?></span><?php endif; ?>
+      </label>
       <?php endforeach; ?>
+    </div>
+    <div id="totalBox" style="display:none;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--muted)">Total estimado dos serviços selecionados:</span>
+      <strong style="color:#d8b4fe;font-size:16px" id="totalValor">R$ 0,00</strong>
     </div>
     <?php endif; ?>
     <h3 style="margin-bottom:14px;font-size:15px">📩 Solicitar serviço</h3>
-    <form method="POST" action="?aba=buscar">
+    <form method="POST" action="?aba=buscar" id="formSolicitar">
       <input type="hidden" name="acao" value="solicitar">
       <input type="hidden" name="empresa_id" value="<?= $empSel['id'] ?>">
       <div class="form-grid">
         <div class="form-group">
           <label>Descreva o que você precisa *</label>
-          <textarea name="descricao" placeholder="Ex: Preciso instalar 3 tomadas no quarto..." required></textarea>
+          <textarea name="descricao" id="descricaoSol" placeholder="Ex: Preciso instalar 3 tomadas no quarto..." required></textarea>
         </div>
         <div class="form-group">
           <label>Prioridade</label>
@@ -329,5 +352,41 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
 </div>
 <?php endif; ?>
 
+
+<script>
+function atualizarTotal() {
+    const checks = document.querySelectorAll('input[name="servicos_sel[]"]:checked');
+    let total = 0;
+    let nomes = [];
+    checks.forEach(c => {
+        total += parseFloat(c.dataset.preco) || 0;
+        nomes.push(c.value);
+    });
+
+    const box = document.getElementById('totalBox');
+    const val = document.getElementById('totalValor');
+    if (checks.length > 0) {
+        box.style.display = 'flex';
+        val.textContent = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    } else {
+        box.style.display = 'none';
+    }
+
+    // Atualiza descrição automaticamente com os serviços selecionados
+    const desc = document.getElementById('descricaoSol');
+    if (desc && nomes.length > 0) {
+        desc.value = 'Serviços: ' + nomes.join(', ');
+    } else if (desc) {
+        desc.value = '';
+    }
+
+    // Marca os cards visualmente
+    document.querySelectorAll('.srv-card').forEach(card => {
+        const cb = card.querySelector('input[type=checkbox]');
+        card.style.borderColor = cb.checked ? '#a855f7' : 'rgba(168,85,247,.2)';
+        card.style.background  = cb.checked ? 'rgba(168,85,247,.2)' : 'rgba(168,85,247,.08)';
+    });
+}
+</script>
 </body>
 </html>
