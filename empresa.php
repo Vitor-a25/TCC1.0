@@ -140,6 +140,75 @@ if ($emp_id) {
     $media_av = round((float)$av->fetchColumn(), 1);
 }
 
+// Servicos mais solicitados
+$top_servicos = [];
+if ($emp_id) {
+    $ts = $db->prepare('
+        SELECT s.nome, COUNT(sol.id) as total
+        FROM servico s
+        LEFT JOIN solicitacao sol ON sol.empresa_id = s.empresa_id
+            AND sol.descricao LIKE CONCAT("%", s.nome, "%")
+        WHERE s.empresa_id = ?
+        GROUP BY s.id, s.nome
+        ORDER BY total DESC
+        LIMIT 5
+    ');
+    $ts->execute([$emp_id]);
+    $top_servicos = $ts->fetchAll();
+}
+
+// Avaliacoes recebidas
+$avaliacoes_emp = [];
+if ($emp_id) {
+    $ae = $db->prepare('
+        SELECT a.nota, a.comentario, a.data, u.nome as u_nome
+        FROM avaliacao a
+        JOIN usuario u ON u.id = a.usuario_id
+        WHERE a.empresa_id = ? AND a.moderado = 0
+        ORDER BY a.data DESC
+        LIMIT 10
+    ');
+    $ae->execute([$emp_id]);
+    $avaliacoes_emp = $ae->fetchAll();
+}
+
+// Grafico solicitacoes por mes
+$mes_emp = $_GET['mes_emp'] ?? '';
+$ano_emp = $_GET['ano_emp'] ?? date('Y');
+
+if ($emp_id) {
+    $sql_emp_graf = 'SELECT DATE_FORMAT(data_solicitacao, "%Y-%m") as mes, COUNT(*) as total FROM solicitacao WHERE empresa_id = ? AND YEAR(data_solicitacao) = ?';
+    $params_emp_graf = [$emp_id, (int)$ano_emp];
+    if ($mes_emp) {
+        $sql_emp_graf .= ' AND MONTH(data_solicitacao) = ?';
+        $params_emp_graf[] = (int)$mes_emp;
+    }
+    $sql_emp_graf .= ' GROUP BY mes ORDER BY mes ASC';
+    $stmt_emp_graf = $db->prepare($sql_emp_graf);
+    $stmt_emp_graf->execute($params_emp_graf);
+    $dados_emp_graf = $stmt_emp_graf->fetchAll();
+} else {
+    $dados_emp_graf = [];
+}
+
+$emp_labels = [];
+$emp_totais = [];
+$nomes_meses_emp = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+$dados_emp_map = [];
+foreach ($dados_emp_graf as $d) $dados_emp_map[$d['mes']] = $d['total'];
+
+if ($mes_emp) {
+    $chave = sprintf('%04d-%02d', (int)$ano_emp, (int)$mes_emp);
+    $emp_labels[] = $nomes_meses_emp[(int)$mes_emp - 1].'/'.$ano_emp;
+    $emp_totais[] = $dados_emp_map[$chave] ?? 0;
+} else {
+    for ($m = 1; $m <= 12; $m++) {
+        $chave = sprintf('%04d-%02d', (int)$ano_emp, $m);
+        $emp_labels[] = $nomes_meses_emp[$m-1];
+        $emp_totais[] = $dados_emp_map[$chave] ?? 0;
+    }
+}
+
 $editSrv = null;
 if (isset($_GET['edit_srv']) && $emp_id) {
     $es = $db->prepare('SELECT * FROM servico WHERE id=? AND empresa_id=?');
@@ -237,6 +306,79 @@ if (isset($_GET['edit_func']) && $emp_id) {
     </table>
   </div>
   <?php endif; ?>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <h2>📈 Solicitações por mês</h2>
+      <form method="GET" style="display:flex;gap:10px;align-items:center">
+        <input type="hidden" name="aba" value="painel">
+        <select name="mes_emp" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#000;font-size:13px">
+          <option value="">Todos os meses</option>
+          <?php foreach (['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $i => $mn): ?>
+            <option value="<?= $i+1 ?>" <?= $mes_emp==($i+1)?'selected':'' ?>><?= $mn ?></option>
+          <?php endforeach; ?>
+        </select>
+        <select name="ano_emp" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#000;font-size:13px">
+          <?php for ($y = date('Y'); $y >= date('Y')-3; $y--): ?>
+            <option value="<?= $y ?>" <?= $ano_emp==$y?'selected':'' ?>><?= $y ?></option>
+          <?php endfor; ?>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+      </form>
+    </div>
+    <div style="position:relative;height:240px;padding:10px 0">
+      <canvas id="graficoEmpSols"></canvas>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+
+    <div class="card">
+      <div class="card-header"><h2>📊 Serviços mais solicitados</h2></div>
+      <?php if ($top_servicos && array_sum(array_column($top_servicos, 'total')) > 0): ?>
+        <?php $max = max(array_column($top_servicos, 'total')) ?: 1; ?>
+        <div style="padding:8px 0;max-height:280px;overflow-y:auto">
+          <?php foreach ($top_servicos as $ts): ?>
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+              <span><?= e($ts['nome']) ?></span>
+              <span style="color:var(--muted)"><?= $ts['total'] ?> sol.</span>
+            </div>
+            <div style="background:var(--line);border-radius:999px;height:8px;overflow:hidden">
+              <div style="background:var(--purple);height:8px;border-radius:999px;width:<?= round(($ts['total'] / $max) * 100) ?>%;transition:width .4s"></div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <div class="empty-state"><div class="icon">📊</div><p>Nenhuma solicitação registrada ainda.</p></div>
+      <?php endif; ?>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2>⭐ Avaliações recebidas</h2></div>
+      <?php if ($avaliacoes_emp): ?>
+      <div style="max-height:280px;overflow-y:auto">
+      <table>
+        <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Cliente</th><th>Nota</th><th>Comentário</th><th>Data</th></tr></thead>
+        <tbody>
+        <?php foreach ($avaliacoes_emp as $av): ?>
+          <tr>
+            <td><?= e($av['u_nome']) ?></td>
+            <td style="color:#facc15;white-space:nowrap"><?= str_repeat('★', $av['nota']) . str_repeat('☆', 5 - $av['nota']) ?></td>
+            <td style="color:var(--muted);font-size:13px"><?= e($av['comentario'] ?: '—') ?></td>
+            <td style="white-space:nowrap;font-size:12px;color:var(--muted)"><?= date('d/m/Y', strtotime($av['data'])) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+      </div>
+      <?php else: ?>
+        <div class="empty-state"><div class="icon">⭐</div><p>Nenhuma avaliação recebida ainda.</p></div>
+      <?php endif; ?>
+    </div>
+
+  </div>
 
   <?php elseif ($aba === 'perfil'): ?>
   <div class="topbar"><div><h1>🏢 Minha Empresa</h1><p>Gerencie as informações da sua empresa</p></div></div>
@@ -359,7 +501,7 @@ if (isset($_GET['edit_func']) && $emp_id) {
   $responder_id = (int)($_GET['responder'] ?? 0);
   $solResp = null;
   if ($responder_id && $emp_id) {
-      $sr = $db->prepare('SELECT s.*,u.nome as u_nome,u.telefone as u_tel,u.endereco as u_endereco,u.cidade as u_cidade,u.estado as u_estado FROM solicitacao s JOIN usuario u ON u.id=s.usuario_id WHERE s.id=? AND s.empresa_id=?');
+      $sr = $db->prepare('SELECT s.*,u.nome as u_nome,u.telefone as u_tel,COALESCE(emp_sol.endereco, u.endereco) as u_endereco,COALESCE(emp_sol.cidade, u.cidade) as u_cidade,COALESCE(emp_sol.estado, u.estado) as u_estado FROM solicitacao s JOIN usuario u ON u.id=s.usuario_id LEFT JOIN empresa emp_sol ON emp_sol.usuario_id=u.id WHERE s.id=? AND s.empresa_id=?');
       $sr->execute([$responder_id, $emp_id]);
       $solResp = $sr->fetch();
   }
@@ -445,7 +587,44 @@ if (isset($_GET['edit_func']) && $emp_id) {
 
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+const empLabels = <?= json_encode($emp_labels) ?>;
+const empTotais = <?= json_encode($emp_totais) ?>;
+const ctxEmp = document.getElementById('graficoEmpSols');
+if (ctxEmp) {
+    new Chart(ctxEmp, {
+        type: 'bar',
+        data: {
+            labels: empLabels,
+            datasets: [{
+                label: 'Solicitações',
+                data: empTotais,
+                backgroundColor: 'rgba(168,85,247,0.7)',
+                borderColor: 'rgba(168,85,247,1)',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: 'rgba(255,255,255,0.5)', stepSize: 1 },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: {
+                    ticks: { color: 'rgba(255,255,255,0.5)' },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
 const precoEl = document.getElementById('preco');
 if (precoEl) {
     precoEl.addEventListener('input', function(e) {

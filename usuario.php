@@ -65,7 +65,12 @@ if (!empty($_GET['cat'])) {
     $sqlEmp .= ' AND c.id = ?';
     $params[] = (int)$_GET['cat'];
 }
-$sqlEmp .= ' GROUP BY e.id ORDER BY media DESC';
+$sqlEmp .= ' GROUP BY e.id, e.nome, e.cnpj, e.email, e.telefone, e.endereco, e.cidade, e.estado, e.descricao, e.ativo, e.criado_em, e.usuario_id';
+if (!empty($_GET['av'])) {
+    $sqlEmp .= ' HAVING media >= ?';
+    $params[] = (float)$_GET['av'];
+}
+$sqlEmp .= ' ORDER BY media DESC';
 
 $stmtEmp = $db->prepare($sqlEmp);
 $stmtEmp->execute($params);
@@ -134,9 +139,7 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
   <nav class="sidebar-nav">
     <a href="?aba=buscar"       class="<?= $aba==='buscar'?'active':'' ?>"><span class="icon">🔍</span> Buscar Serviços</a>
     <a href="?aba=solicitacoes" class="<?= $aba==='solicitacoes'?'active':'' ?>"><span class="icon">📋</span> Minhas Solicitações</a>
-    <?php if (getTipo() === 'cliente'): ?>
     <a href="?aba=avaliacoes"   class="<?= $aba==='avaliacoes'?'active':'' ?>"><span class="icon">⭐</span> Avaliar Empresas</a>
-    <?php endif; ?>
     <?php if (getTipo() === 'empresa'): ?>
     <a href="empresa.php"><span class="icon">🏢</span> Voltar ao Painel</a>
     <?php endif; ?>
@@ -178,6 +181,14 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
       <?php foreach ($cidades as $c): ?>
         <option value="<?= e($c) ?>" <?= ($_GET['cidade']??'')===$c?'selected':'' ?>><?= e($c) ?></option>
       <?php endforeach; ?>
+    </select>
+    <select name="av" style="flex:0 0 160px">
+      <option value="">Todas as avaliações</option>
+      <option value="5" <?= ($_GET['av']??'')=='5'?'selected':'' ?>>5 estrelas</option>
+      <option value="4" <?= ($_GET['av']??'')=='4'?'selected':'' ?>>4+ estrelas</option>
+      <option value="3" <?= ($_GET['av']??'')=='3'?'selected':'' ?>>3+ estrelas</option>
+      <option value="2" <?= ($_GET['av']??'')=='2'?'selected':'' ?>>2+ estrelas</option>
+      <option value="1" <?= ($_GET['av']??'')=='1'?'selected':'' ?>>1+ estrela</option>
     </select>
     <input type="text" name="q" placeholder="Ex: eletricista, frete, informática..." value="<?= e($termo) ?>" style="flex:1;min-width:200px">
   </form>
