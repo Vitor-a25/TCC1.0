@@ -1,4 +1,4 @@
-// Busca na tela inicial — filtra os cards pelo select de categoria
+
 const input  = document.getElementById('searchInput');
 const filter = document.getElementById('categoryFilter');
 const grid   = document.getElementById('servicesGrid');
@@ -17,7 +17,7 @@ function filterCards() {
         card.style.display = (matchTerm && matchCat) ? '' : 'none';
         if (matchTerm && matchCat) visible++;
     });
-    // Mostrar mensagem se nenhum resultado
+    
     let empty = grid ? grid.querySelector('.empty-msg') : null;
     if (!empty && grid) {
         empty = document.createElement('p');
@@ -33,7 +33,7 @@ if (document.getElementById('searchBtn')) {
 if (input)  input.addEventListener('input', filterCards);
 if (filter) filter.addEventListener('change', filterCards);
 
-// Menu mobile
+
 const menuBtn = document.getElementById('menuBtn');
 if (menuBtn) {
     menuBtn.addEventListener('click', () => document.getElementById('navMenu').classList.toggle('active'));

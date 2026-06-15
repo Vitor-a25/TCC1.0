@@ -1,4 +1,4 @@
--- OPUS | Backup automático gerado em 04/06/2026 02:53:22
+-- OPUS | Backup automático gerado em 16/06/2026 00:15:38
 -- ============================================================
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -21,7 +21,23 @@ CREATE TABLE `avaliacao` (
   CONSTRAINT `avaliacao_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`) ON DELETE CASCADE,
   CONSTRAINT `avaliacao_ibfk_2` FOREIGN KEY (`empresa_id`) REFERENCES `empresa` (`id`) ON DELETE CASCADE,
   CONSTRAINT `avaliacao_ibfk_3` FOREIGN KEY (`solicitacao_id`) REFERENCES `solicitacao` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `avaliacao` VALUES
+('4', '10', '3', '17', '5', '', '0', '2026-06-03 22:22:57'),
+('5', '4', '3', '16', '1', '', '0', '2026-06-03 22:24:02'),
+('6', '4', '3', '15', '1', '', '0', '2026-06-03 22:24:04'),
+('7', '4', '3', '14', '1', '', '0', '2026-06-03 22:24:05'),
+('8', '4', '3', '13', '1', '', '0', '2026-06-03 22:24:07'),
+('9', '4', '2', '12', '5', '', '0', '2026-06-03 22:24:08'),
+('10', '4', '2', '11', '5', '', '0', '2026-06-03 22:24:10'),
+('11', '4', '2', '10', '5', '', '0', '2026-06-03 22:24:11'),
+('12', '4', '1', '9', '3', '', '0', '2026-06-03 22:24:12'),
+('13', '4', '1', '8', '3', '', '0', '2026-06-03 22:24:14'),
+('14', '4', '1', '7', '3', '', '0', '2026-06-03 22:24:15'),
+('15', '10', '3', '21', '4', '', '0', '2026-06-03 23:33:26'),
+('16', '10', '3', '19', '2', '', '0', '2026-06-03 23:33:29'),
+('17', '10', '3', '18', '3', '', '0', '2026-06-03 23:33:31');
 
 -- Tabela: backup_log
 DROP TABLE IF EXISTS `backup_log`;
@@ -31,7 +47,10 @@ CREATE TABLE `backup_log` (
   `tamanho` int(11) DEFAULT NULL,
   `criado_em` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `backup_log` VALUES
+('1', 'opus_backup_20260604_025322.sql', '23909', '2026-06-03 21:53:22');
 
 -- Tabela: categoria
 DROP TABLE IF EXISTS `categoria`;
@@ -210,7 +229,7 @@ CREATE TABLE `solicitacao` (
   CONSTRAINT `solicitacao_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`) ON DELETE CASCADE,
   CONSTRAINT `solicitacao_ibfk_2` FOREIGN KEY (`empresa_id`) REFERENCES `empresa` (`id`) ON DELETE CASCADE,
   CONSTRAINT `solicitacao_ibfk_3` FOREIGN KEY (`funcionario_id`) REFERENCES `funcionario` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `solicitacao` VALUES
 ('1', '2', '1', 'Preciso instalar 4 tomadas novas no quarto e sala.', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho. Serviço realizado com sucesso!', '2026-06-02 22:43:02', '2026-05-20', '1'),
@@ -218,7 +237,22 @@ INSERT INTO `solicitacao` VALUES
 ('3', '3', '4', 'Torneira da cozinha com vazamento há 3 dias.', 'Alta', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho. Torneira trocada e vazamento resolvido.', '2026-06-02 22:43:02', '2026-05-22', '6'),
 ('4', '4', '5', 'Preciso pintar a sala e dois quartos.', 'Baixa', 'Pendente', NULL, '2026-06-02 22:43:02', NULL, NULL),
 ('5', '5', '7', 'Jardim precisando de corte de grama e poda.', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho. Jardim limpo e podado com sucesso!', '2026-06-02 22:43:02', '2026-05-25', '7'),
-('6', '6', '13', 'Computador lento e com vírus.', 'Média', 'Em andamento', 'Olá! Recebemos sua solicitação e já estamos a caminho. Computador em processo de formatação.', '2026-06-02 22:43:02', NULL, '15');
+('6', '6', '13', 'Computador lento e com vírus.', 'Média', 'Em andamento', 'Olá! Recebemos sua solicitação e já estamos a caminho. Computador em processo de formatação.', '2026-06-02 22:43:02', NULL, '15'),
+('7', '4', '1', 'Serviços: Troca de Disjuntor', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 21:59:55', '2026-06-04', '1'),
+('8', '4', '1', 'Serviços: Instalação Elétrica', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:00:00', '2026-06-04', '1'),
+('9', '4', '1', 'Serviços: Instalação Elétrica', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:00:08', '2026-06-04', '1'),
+('10', '4', '2', 'Serviços: Frete Urbano', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:00:11', '2026-06-04', '3'),
+('11', '4', '2', 'Serviços: Frete Urbano', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:00:14', '2026-06-04', '4'),
+('12', '4', '2', 'Serviços: Frete Urbano', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:00:19', '2026-06-04', '3'),
+('13', '4', '3', 'Serviços: Instalação de Rede', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:04:05', '2026-06-04', '5'),
+('14', '4', '3', 'Serviços: Instalação de Rede', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:04:08', '2026-06-04', '5'),
+('15', '4', '3', 'Serviços: Instalação de Rede', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:04:11', '2026-06-04', '5'),
+('16', '4', '3', 'Serviços: Instalação de Rede', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:04:14', '2026-06-04', '5'),
+('17', '10', '3', 'Serviços: Instalação de Rede', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 22:20:08', '2026-06-04', '5'),
+('18', '10', '3', 'Serviços: Formatação PC', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 23:32:22', '2026-06-04', '5'),
+('19', '10', '3', 'Serviços: Suporte Técnico', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 23:32:27', '2026-06-04', '5'),
+('20', '10', '1', 'Serviços: Instalação Elétrica', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 23:32:30', '2026-06-04', '1'),
+('21', '10', '3', 'Serviços: Formatação PC, Suporte Técnico, Instalação de Rede', 'Média', 'Concluído', 'Olá! Recebemos sua solicitação e já estamos a caminho.', '2026-06-03 23:32:34', '2026-06-04', '5');
 
 -- Tabela: usuario
 DROP TABLE IF EXISTS `usuario`;

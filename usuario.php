@@ -383,7 +383,8 @@ function atualizarTotal() {
         box.style.display = 'none';
     }
 
-    // Atualiza descrição automaticamente com os serviços selecionados
+    
+
     const desc = document.getElementById('descricaoSol');
     if (desc && nomes.length > 0) {
         desc.value = 'Serviços: ' + nomes.join(', ');
@@ -391,7 +392,8 @@ function atualizarTotal() {
         desc.value = '';
     }
 
-    // Marca os cards visualmente
+    
+    
     document.querySelectorAll('.srv-card').forEach(card => {
         const cb = card.querySelector('input[type=checkbox]');
         card.style.borderColor = cb.checked ? '#a855f7' : 'rgba(168,85,247,.2)';

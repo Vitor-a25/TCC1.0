@@ -160,5 +160,4 @@ Acesse o [phpMyAdmin](http://localhost/phpmyadmin/index.php), selecione o banco 
 UPDATE usuario SET senha = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
 WHERE email IN ('admin@opus.com','joao@demo.com','maria@demo.com','carlos@demo.com','ana@demo.com','pedro@demo.com','fernanda@demo.com','eletroluz@demo.com','fretes@demo.com','techhelp@demo.com','hidro@demo.com','pintabem@demo.com','limpeza@demo.com','jardim@demo.com','segurmax@demo.com','saude@demo.com','reformas@demo.com','argelado@demo.com','dedetizadora@demo.com','techmar@demo.com','mudancas@demo.com','limpemax@demo.com');
 ```
-
 Isso redefine todas as senhas para **password**.

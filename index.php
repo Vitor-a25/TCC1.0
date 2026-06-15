@@ -5,7 +5,6 @@ require_once 'includes/db.php';
 $db = getDB();
 $cats = $db->query('SELECT * FROM categoria ORDER BY nome')->fetchAll();
 
-// Buscar serviços do banco para os cards da tela inicial
 $servicos_home = $db->query('
     SELECT s.nome, s.descricao, s.preco_medio, c.icone, c.nome as cat_nome
     FROM servico s
