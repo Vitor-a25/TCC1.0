@@ -140,7 +140,7 @@ if ($emp_id) {
     $media_av = round((float)$av->fetchColumn(), 1);
 }
 
-// Servicos mais solicitados
+
 $top_servicos = [];
 if ($emp_id) {
     $ts = $db->prepare('
@@ -157,7 +157,7 @@ if ($emp_id) {
     $top_servicos = $ts->fetchAll();
 }
 
-// Avaliacoes recebidas
+
 $avaliacoes_emp = [];
 if ($emp_id) {
     $ae = $db->prepare('
@@ -172,7 +172,7 @@ if ($emp_id) {
     $avaliacoes_emp = $ae->fetchAll();
 }
 
-// Grafico solicitacoes por mes
+
 $mes_emp = $_GET['mes_emp'] ?? '';
 $ano_emp = $_GET['ano_emp'] ?? date('Y');
 
@@ -208,6 +208,7 @@ if ($mes_emp) {
         $emp_totais[] = $dados_emp_map[$chave] ?? 0;
     }
 }
+
 
 $editSrv = null;
 if (isset($_GET['edit_srv']) && $emp_id) {
@@ -423,6 +424,8 @@ if (isset($_GET['edit_func']) && $emp_id) {
       </div>
     </form>
   </div>
+
+
   <div class="card">
     <div class="card-header"><h2>Serviços Cadastrados</h2></div>
     <?php if ($servicos): ?>
@@ -449,6 +452,7 @@ if (isset($_GET['edit_func']) && $emp_id) {
       <div class="empty-state"><div class="icon">🛠️</div><p>Nenhum serviço cadastrado ainda.</p></div>
     <?php endif; ?>
   </div>
+
 
   <?php elseif ($aba === 'funcionarios'): ?>
   <div class="topbar"><div><h1>👷 Funcionários</h1><p>Gerencie os funcionários da sua empresa</p></div></div>
@@ -494,6 +498,8 @@ if (isset($_GET['edit_func']) && $emp_id) {
     <?php endif; ?>
   </div>
 
+
+
   <?php elseif ($aba === 'solicitacoes'): ?>
   <div class="topbar"><div><h1>📩 Solicitações</h1><p>Responda as solicitações dos seus clientes</p></div></div>
 
@@ -506,6 +512,8 @@ if (isset($_GET['edit_func']) && $emp_id) {
       $solResp = $sr->fetch();
   }
   ?>
+
+
 
   <div class="card">
     <table>
@@ -588,6 +596,7 @@ if (isset($_GET['edit_func']) && $emp_id) {
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <script>
 const empLabels = <?= json_encode($emp_labels) ?>;
 const empTotais = <?= json_encode($emp_totais) ?>;
@@ -620,10 +629,11 @@ if (ctxEmp) {
                     ticks: { color: 'rgba(255,255,255,0.5)' },
                     grid: { display: false }
                 }
-            }
+            } 
         }
     });
 }
+
 
 const precoEl = document.getElementById('preco');
 if (precoEl) {
@@ -637,6 +647,7 @@ if (precoEl) {
         e.target.value = reais + ',' + centavos;
     });
 }
+
 
 function mascaraTelFunc() {
     const el = document.getElementById('func_tel');
@@ -654,6 +665,7 @@ function mascaraTelFunc() {
     });
 }
 mascaraTelFunc();
+
 
 const cnpjEmp = document.getElementById('cnpj_emp');
 if (cnpjEmp) {
