@@ -7,21 +7,25 @@ $db   = getDB();
 $nome = $_SESSION['nome'];
 $msg  = '';
 
+
 if ($_GET['del_user'] ?? null) {
     $uid = (int)$_GET['del_user'];
     $db->prepare('DELETE FROM usuario WHERE id=? AND tipo != "admin"')->execute([$uid]);
     redirect('admin.php?aba=usuarios&ok=Usuario+removido');
 }
 
+
 if ($_GET['toggle_emp'] ?? null) {
     $eid = (int)$_GET['toggle_emp'];
     $db->prepare('UPDATE empresa SET ativo = NOT ativo WHERE id=?')->execute([$eid]);
     redirect('admin.php?aba=empresas&ok=Status+alterado');
 }
+
 if ($_GET['del_emp'] ?? null) {
     $db->prepare('DELETE FROM empresa WHERE id=?')->execute([(int)$_GET['del_emp']]);
     redirect('admin.php?aba=empresas&ok=Empresa+removida');
 }
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar_cat') {
     $cn  = trim($_POST['cat_nome']  ?? '');
