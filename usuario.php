@@ -41,6 +41,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'avaliar
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar_dados') {
+    $n   = trim($_POST['nome']     ?? '');
+    $tel = trim($_POST['telefone'] ?? '');
+    $end = trim($_POST['endereco'] ?? '');
+    $cid = trim($_POST['cidade']   ?? '');
+    $est = trim($_POST['estado']   ?? '');
+
+    if (!$n) {
+        $msg = 'error:O nome é obrigatório.';
+    } else {
+        $db->prepare('UPDATE usuario SET nome=?, telefone=?, endereco=?, cidade=?, estado=? WHERE id=?')
+           ->execute([$n, $tel, $end, $cid, $est, $uid]);
+        $_SESSION['nome'] = $n;
+        $nome = $n;
+        $msg = 'success:Dados atualizados com sucesso!';
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'trocar_senha') {
+    $atual   = $_POST['senha_atual']   ?? '';
+    $nova    = $_POST['senha_nova']    ?? '';
+    $confirm = $_POST['senha_confirm'] ?? '';
+
+    $chk = $db->prepare('SELECT senha FROM usuario WHERE id = ?');
+    $chk->execute([$uid]);
+    $hashAtual = $chk->fetchColumn();
+
+    if (!password_verify($atual, $hashAtual)) {
+        $msg = 'error:Senha atual incorreta.';
+    } elseif (strlen($nova) < 8) {
+        $msg = 'error:A nova senha deve ter no mínimo 8 caracteres.';
+    } elseif (!preg_match('/[A-Z]/', $nova) || !preg_match('/[a-z]/', $nova) || !preg_match('/[0-9]/', $nova) || !preg_match('/[\\W_]/', $nova)) {
+        $msg = 'error:A nova senha deve conter maiúscula, minúscula, número e caractere especial.';
+    } elseif ($nova !== $confirm) {
+        $msg = 'error:As senhas não coincidem.';
+    } else {
+        $novoHash = password_hash($nova, PASSWORD_DEFAULT);
+        $db->prepare('UPDATE usuario SET senha=? WHERE id=?')->execute([$novoHash, $uid]);
+        $msg = 'success:Senha alterada com sucesso!';
+    }
+}
+
 $aba   = $_GET['aba'] ?? 'buscar';
 if (isset($_GET['ok'])) $msg = 'success:' . urldecode($_GET['ok']);
 $termo = trim($_GET['q'] ?? '');
@@ -113,6 +155,10 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
     return !$c->fetch();
 });
 
+$du = $db->prepare('SELECT * FROM usuario WHERE id = ?');
+$du->execute([$uid]);
+$dadosUser = $du->fetch();
+
 [$msgTipo, $msgText] = $msg ? explode(':', $msg, 2) : ['', ''];
 ?>
 <!DOCTYPE html>
@@ -140,6 +186,9 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
     <a href="?aba=buscar"       class="<?= $aba==='buscar'?'active':'' ?>"><span class="icon">🔍</span> Buscar Serviços</a>
     <a href="?aba=solicitacoes" class="<?= $aba==='solicitacoes'?'active':'' ?>"><span class="icon">📋</span> Minhas Solicitações</a>
     <a href="?aba=avaliacoes"   class="<?= $aba==='avaliacoes'?'active':'' ?>"><span class="icon">⭐</span> Avaliar Empresas</a>
+    <?php if (getTipo() !== 'empresa'): ?>
+    <a href="?aba=meusdados"    class="<?= $aba==='meusdados'?'active':'' ?>"><span class="icon">👤</span> Meus Dados</a>
+    <?php endif; ?>
     <?php if (getTipo() === 'empresa'): ?>
     <a href="empresa.php"><span class="icon">🏢</span> Voltar ao Painel</a>
     <?php endif; ?>
@@ -294,6 +343,68 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
   <?php else: ?>
     <div class="empty-state"><div class="icon">✅</div><p>Nenhum serviço pendente de avaliação.</p></div>
   <?php endif; ?>
+
+  <?php elseif ($aba === 'meusdados'): ?>
+  <div class="topbar"><div><h1>👤 Meus Dados</h1><p>Atualize suas informações pessoais e senha</p></div></div>
+
+  <div class="card">
+    <div class="card-header"><h2>Informações pessoais</h2></div>
+    <form method="POST">
+      <input type="hidden" name="acao" value="salvar_dados">
+      <div class="form-grid two">
+        <div class="form-group">
+          <label>Nome completo *</label>
+          <input type="text" name="nome" value="<?= e($dadosUser['nome'] ?? '') ?>" required>
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" value="<?= e($dadosUser['email'] ?? '') ?>" disabled style="opacity:.6;cursor:not-allowed">
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="tel" name="telefone" id="tel_meusdados" value="<?= e($dadosUser['telefone'] ?? '') ?>" placeholder="(44) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label>Endereço</label>
+          <input type="text" name="endereco" value="<?= e($dadosUser['endereco'] ?? '') ?>">
+        </div>
+        <div class="form-group">
+          <label>Cidade</label>
+          <input type="text" name="cidade" value="<?= e($dadosUser['cidade'] ?? '') ?>">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <input type="text" name="estado" value="<?= e($dadosUser['estado'] ?? '') ?>" placeholder="PR">
+        </div>
+      </div>
+      <div style="margin-top:16px"><button type="submit" class="btn btn-primary">Salvar alterações</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Alterar senha</h2></div>
+    <form method="POST">
+      <input type="hidden" name="acao" value="trocar_senha">
+      <div class="form-grid two">
+        <div class="form-group">
+          <label>Senha atual *</label>
+          <input type="password" name="senha_atual" required>
+        </div>
+        <div class="form-group"></div>
+        <div class="form-group">
+          <label>Nova senha *</label>
+          <input type="password" name="senha_nova" required>
+        </div>
+        <div class="form-group">
+          <label>Confirmar nova senha *</label>
+          <input type="password" name="senha_confirm" required>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">A nova senha deve ter no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.</p>
+      <div style="margin-top:16px"><button type="submit" class="btn btn-primary">Alterar senha</button></div>
+    </form>
+  </div>
+
   <?php endif; ?>
 
 </main>
@@ -365,6 +476,21 @@ $semAval = array_filter($minhasSols, function($s) use ($db) {
 
 
 <script>
+const telMeusDados = document.getElementById('tel_meusdados');
+if (telMeusDados) {
+    telMeusDados.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '').substring(0, 11);
+        if (v.length <= 10) {
+            v = v.replace(/^(\d{2})(\d)/, '($1) $2');
+            v = v.replace(/(\d{4})(\d)/, '$1-$2');
+        } else {
+            v = v.replace(/^(\d{2})(\d)/, '($1) $2');
+            v = v.replace(/(\d{5})(\d)/, '$1-$2');
+        }
+        e.target.value = v;
+    });
+}
+
 function atualizarTotal() {
     const checks = document.querySelectorAll('input[name="servicos_sel[]"]:checked');
     let total = 0;

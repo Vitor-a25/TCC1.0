@@ -42,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash   = password_hash($senha, PASSWORD_DEFAULT);
             $tipoDB = ($tipo === 'empresa') ? 'empresa' : 'cliente';
 
-            // Endereço do cliente
             $end = trim($_POST['endereco'] ?? '');
             $cid = trim($_POST['cidade']   ?? '');
             $est = trim($_POST['estado']   ?? '');
