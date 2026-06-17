@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'solicit
     }
 }
 
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'avaliar') {
     $sol_id = (int)($_POST['solicitacao_id'] ?? 0);
     $emp_id = (int)($_POST['empresa_id']     ?? 0);
@@ -40,6 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'avaliar
         $msg = 'error:Selecione uma nota para avaliar.';
     }
 }
+
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar_dados') {
     $n   = trim($_POST['nome']     ?? '');
@@ -137,6 +141,8 @@ if (isset($_GET['empresa'])) {
     }
 }
 
+
+
 $sols = $db->prepare('SELECT s.*, e.nome as emp_nome, e.telefone as emp_tel, f.nome as func_nome, f.telefone as func_tel, f.cargo as func_cargo FROM solicitacao s JOIN empresa e ON e.id = s.empresa_id LEFT JOIN funcionario f ON f.id = s.funcionario_id WHERE s.usuario_id = ? ORDER BY s.data_solicitacao DESC');
 $sols->execute([$uid]);
 $minhasSols = $sols->fetchAll();
@@ -147,6 +153,8 @@ $pendentes  = count(array_filter($minhasSols, fn($s) => $s['status'] === 'Penden
 $avalSt     = $db->prepare('SELECT COUNT(*) FROM avaliacao WHERE usuario_id = ?');
 $avalSt->execute([$uid]);
 $totalAv = $avalSt->fetchColumn();
+
+
 
 $semAval = array_filter($minhasSols, function($s) use ($db) {
     if ($s['status'] !== 'Concluído') return false;
@@ -211,6 +219,8 @@ $dadosUser = $du->fetch();
     <div class="stat-card"><div class="label">Avaliações feitas</div><div class="value" style="color:var(--purple)"><?= $totalAv ?></div></div>
   </div>
 
+
+
   <?php if ($aba === 'buscar'): ?>
   <div class="topbar">
     <div><h1>🔍 Buscar Serviços</h1><p>Pesquise empresas por nome, cidade ou categoria</p></div>
@@ -267,6 +277,8 @@ $dadosUser = $du->fetch();
     <?php endif; ?>
   </div>
 
+
+
   <?php elseif ($aba === 'solicitacoes'): ?>
   <div class="topbar"><div><h1>📋 Minhas Solicitações</h1><p>Acompanhe o status dos seus pedidos</p></div></div>
   <div class="card">
@@ -306,6 +318,7 @@ $dadosUser = $du->fetch();
     <?php endif; ?>
   </div>
 
+
   <?php elseif ($aba === 'avaliacoes'): ?>
   <div class="topbar"><div><h1>⭐ Avaliar Empresas</h1><p>Avalie os serviços que você contratou</p></div></div>
   <?php if ($semAval): ?>
@@ -343,6 +356,8 @@ $dadosUser = $du->fetch();
   <?php else: ?>
     <div class="empty-state"><div class="icon">✅</div><p>Nenhum serviço pendente de avaliação.</p></div>
   <?php endif; ?>
+
+
 
   <?php elseif ($aba === 'meusdados'): ?>
   <div class="topbar"><div><h1>👤 Meus Dados</h1><p>Atualize suas informações pessoais e senha</p></div></div>
@@ -409,6 +424,8 @@ $dadosUser = $du->fetch();
 
 </main>
 
+
+
 <?php if ($empSel): ?>
 <div class="modal-backdrop open" id="empModal">
   <div class="modal-box" style="max-width:680px">
@@ -460,6 +477,7 @@ $dadosUser = $du->fetch();
       </div>
       <div style="margin-top:14px"><button type="submit" class="btn btn-primary">Enviar Solicitação</button></div>
     </form>
+
     <?php if ($empSel['avaliacoes']): ?>
     <h3 style="margin:24px 0 12px;font-size:15px">💬 Avaliações recentes</h3>
     <?php foreach ($empSel['avaliacoes'] as $av): ?>
@@ -476,6 +494,8 @@ $dadosUser = $du->fetch();
 
 
 <script>
+
+
 const telMeusDados = document.getElementById('tel_meusdados');
 if (telMeusDados) {
     telMeusDados.addEventListener('input', function(e) {
@@ -490,6 +510,8 @@ if (telMeusDados) {
         e.target.value = v;
     });
 }
+
+
 
 function atualizarTotal() {
     const checks = document.querySelectorAll('input[name="servicos_sel[]"]:checked');

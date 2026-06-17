@@ -71,7 +71,7 @@ function fazerBackupAutomatico(): void {
         $db->prepare("INSERT INTO backup_log (arquivo, tamanho) VALUES (?, ?)")
            ->execute([basename($arquivo), strlen($sql)]);
 
-        // Remove backups com mais de 7 dias
+        
         $todos = glob($dir . 'opus_backup_*.sql');
         foreach ($todos as $f) {
             if (filemtime($f) < strtotime('-7 days')) {

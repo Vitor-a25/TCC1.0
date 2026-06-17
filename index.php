@@ -67,12 +67,15 @@ $servicos_home = $db->query('
       </div>
     </section>
 
+
     <section class="search-panel" id="servicos">
       <div class="section-title">
         <span>Busca rápida</span>
         <h2>Pesquise por serviços ou categorias</h2>
         <p>Encontre o profissional certo para o que você precisa.</p>
       </div>
+
+
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Ex: eletricista, pintura, frete..." />
         <select id="categoryFilter">
@@ -83,6 +86,8 @@ $servicos_home = $db->query('
         </select>
         <button id="searchBtn">Buscar</button>
       </div>
+
+
       <div class="services-grid" id="servicesGrid">
         <?php foreach ($servicos_home as $sv): ?>
           <article class="service-card" onclick="window.location='<?= isLoggedIn() ? 'usuario.php?aba=buscar' : 'login.php' ?>'" style="cursor:pointer">
@@ -100,6 +105,8 @@ $servicos_home = $db->query('
         <h2>Conheça nossos prestadores</h2>
         <p>Veja os dados da empresa, serviços oferecidos, reputação e solicite atendimento.</p>
       </div>
+
+
       <div class="company-grid">
         <article class="company-card featured">
           <div class="company-top"><div class="avatar">EL</div><div><h3>EletroLuz Cianorte</h3><p>Instalações elétricas</p></div></div>
@@ -111,6 +118,8 @@ $servicos_home = $db->query('
             <a href="login.php" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php endif; ?>
         </article>
+
+
         <article class="company-card">
           <div class="company-top"><div class="avatar">FR</div><div><h3>Fretes Paraná</h3><p>Transporte e pequenas mudanças</p></div></div>
           <p>Equipe especializada em fretes urbanos, montagem simples e transporte seguro.</p>
@@ -121,6 +130,8 @@ $servicos_home = $db->query('
             <a href="login.php" style="display:block;text-align:center;padding:14px;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:700;">Solicitar serviço</a>
           <?php endif; ?>
         </article>
+
+
         <article class="company-card">
           <div class="company-top"><div class="avatar">TI</div><div><h3>TechHelp</h3><p>Informática e suporte</p></div></div>
           <p>Formatação, manutenção, instalação de sistemas e suporte técnico para empresas.</p>
@@ -133,6 +144,7 @@ $servicos_home = $db->query('
         </article>
       </div>
     </section>
+
 
     <section class="workflow" id="como-funciona">
       <div class="section-title">
@@ -149,6 +161,7 @@ $servicos_home = $db->query('
 </div>
     </section>
 
+
     <section class="dashboards">
       <div class="section-title">
         <span>Para todos os perfis</span>
@@ -159,6 +172,7 @@ $servicos_home = $db->query('
         <div class="panel"><h3>🏢 Empresa</h3><ul><li>Cadastrar perfil</li><li>Gerenciar serviços</li><li>Responder solicitações</li><li>Acompanhar avaliações</li></ul></div>
       </div>
     </section>
+
 
     <section class="reviews" id="avaliacoes">
       <div class="section-title">
@@ -172,6 +186,7 @@ $servicos_home = $db->query('
       </div>
     </section>
 
+    
     <section class="cta">
       <h2>Pronto para solicitar um serviço?</h2>
       <p>Crie sua conta gratuitamente e encontre profissionais de confiança.</p>

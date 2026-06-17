@@ -3,6 +3,8 @@ const input  = document.getElementById('searchInput');
 const filter = document.getElementById('categoryFilter');
 const grid   = document.getElementById('servicesGrid');
 
+
+
 function filterCards() {
     const term = input ? input.value.toLowerCase() : '';
     const cat  = filter ? filter.value : 'todos';
@@ -27,11 +29,15 @@ function filterCards() {
     if (empty) empty.style.display = visible === 0 ? '' : 'none';
 }
 
+
+
 if (document.getElementById('searchBtn')) {
     document.getElementById('searchBtn').addEventListener('click', filterCards);
 }
 if (input)  input.addEventListener('input', filterCards);
 if (filter) filter.addEventListener('change', filterCards);
+
+
 
 
 const menuBtn = document.getElementById('menuBtn');
