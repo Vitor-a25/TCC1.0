@@ -23,8 +23,11 @@ function requireLogin(string $tipo = ''): void {
         exit;
     }
 
-    fazerBackupAutomatico();
+    if (function_exists('fazerBackupAutomatico')) {
+        fazerBackupAutomatico();
+    }
 }
+
 
 function redirect(string $url): void {
     header('Location: ' . $url);
